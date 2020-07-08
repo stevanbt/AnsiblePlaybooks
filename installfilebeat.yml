@@ -1,0 +1,49 @@
+---
+- name: Install filebeat
+  hosts: all
+
+  tasks:
+
+  - name: Import filebeat key
+    rpm_key:
+      state: present
+      key: https://artifacts.elastic.co/GPG-KEY-elasticsearch
+
+  - name: Create yum file for filebeat
+    yum_repository:
+      file: elasticsearch
+      name: "elasticsearch-7.x"
+      description: Elasticsearch repository for 7.x packages
+      baseurl: https://artifacts.elastic.co/packages/7.x/yum
+      gpgcheck: 1
+      gpgkey: https://artifacts.elastic.co/GPG-KEY-elasticsearch
+      enabled: 1
+
+  - name: install the latest version of filebeat
+    dnf:
+      name: filebeat
+      state: latest
+
+  - name: enable system module in filebeat
+    shell: filebeat modules enable system
+
+  - name: Remove localhost target for elastic
+    lineinfile:
+      path: /etc/filebeat/filebeat.yml
+      state: absent
+      regexp: '^  hosts: \[\"localhost:9200\"\]'
+
+  - name: point filebeat at our server
+    blockinfile:
+      path: /etc/filebeat/filebeat.yml
+      marker: "# {mark} ANSIBLE MANAGED BLOCK"
+      insertafter: "output.elasticsearch:"
+      block: |2
+          hosts: ["{{ targetElasticsearchServer }}:{{ targetElasticsearchPort }}"]
+
+  - name: enable service filebeat
+    systemd:
+      name: filebeat
+      enabled: yes
+      state: started
+
