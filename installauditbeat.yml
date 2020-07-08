@@ -1,0 +1,47 @@
+---
+- name: Install auditbeat
+  hosts: all
+
+  tasks:
+
+  - name: Import auditbeat key
+    rpm_key:
+      state: present
+      key: https://artifacts.elastic.co/GPG-KEY-elasticsearch
+
+  - name: Create yum file for auditbeat
+    yum_repository:
+      file: elasticsearch
+      name: "elasticsearch-7.x"
+      description: Elasticsearch repository for 7.x packages
+      baseurl: https://artifacts.elastic.co/packages/7.x/yum
+      gpgcheck: 1
+      gpgkey: https://artifacts.elastic.co/GPG-KEY-elasticsearch
+      enabled: 1
+
+  - name: install the latest version of auditbeat
+    dnf:
+      name: auditbeat
+      state: latest
+
+  - name: Remove localhost target for elastic
+    lineinfile:
+      path: /etc/auditbeat/auditbeat.yml
+      state: absent
+      regexp: '^  hosts: \[\"localhost:9200\"\]'
+
+
+  - name: point auditbeat at our server
+    blockinfile:
+      path: /etc/auditbeat/auditbeat.yml
+      marker: "# {mark} ANSIBLE MANAGED BLOCK"
+      insertafter: "output.elasticsearch:"
+      block: |2
+          hosts: ["{{ targetElasticsearchServer }}:{{ targetElasticsearchPort }}"]
+
+  - name: enable service auditbeat
+    systemd:
+      name: auditbeat
+      enabled: yes
+      state: started
+
