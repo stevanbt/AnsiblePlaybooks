@@ -1,0 +1,46 @@
+---
+- name: Install packetbeat
+  hosts: all
+
+  tasks:
+
+  - name: Import packetbeat key
+    rpm_key:
+      state: present
+      key: https://artifacts.elastic.co/GPG-KEY-elasticsearch
+
+  - name: Create yum file for packetbeat
+    yum_repository:
+      file: elasticsearch
+      name: "elasticsearch-7.x"
+      description: Elasticsearch repository for 7.x packages
+      baseurl: https://artifacts.elastic.co/packages/7.x/yum
+      gpgcheck: 1
+      gpgkey: https://artifacts.elastic.co/GPG-KEY-elasticsearch
+      enabled: 1
+
+  - name: install the latest version of packetbeat
+    dnf:
+      name: packetbeat
+      state: latest
+
+  - name: Remove localhost target for elastic
+    lineinfile:
+      path: /etc/packetbeat/packetbeat.yml
+      state: absent
+      regexp: '^  hosts: \[\"localhost:9200\"\]'
+
+  - name: point packetbeat at our server
+    blockinfile:
+      path: /etc/packetbeat/packetbeat.yml
+      marker: "# {mark} ANSIBLE MANAGED BLOCK"
+      insertafter: "output.elasticsearch:"
+      block: |2
+          hosts: ["{{ targetElasticsearchServer }}:{{ targetElasticsearchPort }}"]
+
+  - name: enable service packetbeat
+    systemd:
+      name: packetbeat
+      enabled: yes
+      state: started
+
