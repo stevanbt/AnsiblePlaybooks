@@ -3,7 +3,7 @@
   hosts: all
 
   tasks:
-
+ 
   - name: Import auditbeat key
     rpm_key:
       state: present
