@@ -3,21 +3,26 @@
   hosts: all
 
   tasks:
+  - name: Setup keys and repos for auditbeat
+    block: 
  
-  - name: Import auditbeat key
-    rpm_key:
-      state: present
-      key: https://artifacts.elastic.co/GPG-KEY-elasticsearch
+    - name: Import auditbeat key
+      rpm_key:
+        state: present
+        key: https://artifacts.elastic.co/GPG-KEY-elasticsearch
+    
 
-  - name: Create yum file for auditbeat
-    yum_repository:
-      file: elasticsearch
-      name: "elasticsearch-7.x"
-      description: Elasticsearch repository for 7.x packages
-      baseurl: https://artifacts.elastic.co/packages/7.x/yum
-      gpgcheck: 1
-      gpgkey: https://artifacts.elastic.co/GPG-KEY-elasticsearch
-      enabled: 1
+    - name: Create yum file for auditbeat
+      yum_repository:
+        file: elasticsearch
+        name: "elasticsearch-7.x"
+        description: Elasticsearch repository for 7.x packages
+        baseurl: https://artifacts.elastic.co/packages/7.x/yum
+        gpgcheck: 1
+        gpgkey: https://artifacts.elastic.co/GPG-KEY-elasticsearch
+        enabled: 1
+        
+    when: ansible_facts['os_family'] == "RedHat"
 
   - name: install the latest version of auditbeat
     dnf:
@@ -44,4 +49,6 @@
       name: auditbeat
       enabled: yes
       state: started
+      
+    when: ansible_facts['os_family'] == "RedHat" and ansible_facts['lsb']['major_release']|int >= 6
 
