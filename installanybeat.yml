@@ -1,5 +1,4 @@
 ---
-<<<<<<< HEAD
 - name: Install {{ theBeat }}
   hosts: all
 
@@ -8,25 +7,11 @@
     block:
 
     - name: Import {{ theBeat }} key
-=======
-- name: Install filebeat
-  hosts: all
-
-  tasks:
-  - name: Setup keys and repos for filebeat (RH)
-    block:
-
-    - name: Import filebeat key
->>>>>>> f0f9030e5df430463036080eaa8d47ed945aa05b
       rpm_key:
         state: present
         key: https://artifacts.elastic.co/GPG-KEY-elasticsearch
 
-<<<<<<< HEAD
     - name: Create yum file for {{ theBeat }}
-=======
-    - name: Create yum file for filebeat
->>>>>>> f0f9030e5df430463036080eaa8d47ed945aa05b
       yum_repository:
         file: elasticsearch
         name: "elasticsearch-7.x"
@@ -35,26 +20,15 @@
         gpgcheck: 1
         gpgkey: https://artifacts.elastic.co/GPG-KEY-elasticsearch
         enabled: 1
-<<<<<<< HEAD
 
     - name: install the latest version of {{ theBeat }}
       dnf:
         name: "{{ theBeat }}"
-=======
-        
-    - name: install the latest version of filebeat
-      dnf:
-        name: filebeat
->>>>>>> f0f9030e5df430463036080eaa8d47ed945aa05b
         state: latest
 
     when: ansible_facts['os_family'] == "RedHat"
 
-<<<<<<< HEAD
   - name: Setup keys and repos for {{ theBeat }} (Debian)
-=======
-  - name: Setup keys and repos for filebeat (Debian)
->>>>>>> f0f9030e5df430463036080eaa8d47ed945aa05b
     block:
 
     - name: Import elastic key
@@ -66,7 +40,6 @@
       apt:
         name: apt-transport-https
         state: present
-<<<<<<< HEAD
 
     - name: Import repo
       apt_repository:
@@ -93,39 +66,11 @@
   - name: point {{ theBeat }} at our server
     blockinfile:
       path: /etc/{{ theBeat }}/{{ theBeat }}.yml
-=======
-        
-     - name: Import repo
-       apt_repository:
-         repo: deb https://artifacts.elastic.co/packages/7.x/apt stable main
-         state: present
-         
-    - name: Install filebeat
-      apt:
-        name: filebeat
-        state: present
-        
-    when: ansible_facts['os_family'] == "Debian"
-
-  - name: enable system module in filebeat
-    shell: filebeat modules enable system
-
-  - name: Remove localhost target for elastic
-    lineinfile:
-      path: /etc/filebeat/filebeat.yml
-      state: absent
-      regexp: '^  hosts: \[\"localhost:9200\"\]'
-
-  - name: point filebeat at our server
-    blockinfile:
-      path: /etc/filebeat/filebeat.yml
->>>>>>> f0f9030e5df430463036080eaa8d47ed945aa05b
       marker: "# {mark} ANSIBLE MANAGED BLOCK"
       insertafter: "output.elasticsearch:"
       block: |2
           hosts: ["{{ targetElasticsearchServer }}:{{ targetElasticsearchPort }}"]
 
-<<<<<<< HEAD
   - name: enable service {{ theBeat }}
     systemd:
       name: "{{ theBeat }}"
@@ -136,14 +81,3 @@
            ansible_facts['os_family'] == "Debian"
 
 
-=======
-  - name: enable service filebeat
-    systemd:
-      name: filebeat
-      enabled: yes
-      state: started
-      
-    when: (ansible_facts['os_family'] == "RedHat" and ansible_facts['distribution_major_version']|int >= 6) or
-           ansible_facts['os_family'] == "Debian"
-
->>>>>>> f0f9030e5df430463036080eaa8d47ed945aa05b
