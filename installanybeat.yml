@@ -55,7 +55,7 @@
 
   - name: enable system module in {{ theBeat }}
     shell: "{{ theBeat }} modules enable system"
-    when: "{{ theBeat }} == fileBeat"
+    when: theBeat == "fileBeat"
 
   - name: Remove localhost target for elastic
     lineinfile:
