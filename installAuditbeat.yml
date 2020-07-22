@@ -1,0 +1,10 @@
+---
+- name: Install auditbeat
+  hosts: all
+  roles:
+    - role: installAnybeat
+      vars:
+        targetElasticsearchServer: "192.168.1.113"
+        targetElasticsearchPort: "9200"
+        theBeat: "auditbeat"
+
