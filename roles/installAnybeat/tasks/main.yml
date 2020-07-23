@@ -1,83 +1,79 @@
 ---
-- name: Install {{ theBeat }}
-  hosts: all
 
-  tasks:
-  - name: Setup keys and repos for {{ theBeat }} (RH)
-    block:
+- name: Setup keys and repos for {{ theBeat }} (RH)
+  block:
+  - name: Import {{ theBeat }} key
+    rpm_key:
+      state: present
+      key: https://artifacts.elastic.co/GPG-KEY-elasticsearch
 
-    - name: Import {{ theBeat }} key
-      rpm_key:
-        state: present
-        key: https://artifacts.elastic.co/GPG-KEY-elasticsearch
+  - name: Create yum file for {{ theBeat }}
+    yum_repository:
+      file: elasticsearch
+      name: "elasticsearch-7.x"
+      description: Elasticsearch repository for 7.x packages
+      baseurl: https://artifacts.elastic.co/packages/7.x/yum
+      gpgcheck: 1
+      gpgkey: https://artifacts.elastic.co/GPG-KEY-elasticsearch
+      enabled: 1
 
-    - name: Create yum file for {{ theBeat }}
-      yum_repository:
-        file: elasticsearch
-        name: "elasticsearch-7.x"
-        description: Elasticsearch repository for 7.x packages
-        baseurl: https://artifacts.elastic.co/packages/7.x/yum
-        gpgcheck: 1
-        gpgkey: https://artifacts.elastic.co/GPG-KEY-elasticsearch
-        enabled: 1
-
-    - name: install the latest version of {{ theBeat }}
-      dnf:
-        name: "{{ theBeat }}"
-        state: latest
-
-    when: ansible_facts['os_family'] == "RedHat"
-
-  - name: Setup keys and repos for {{ theBeat }} (Debian)
-    block:
-
-    - name: Import elastic key
-      apt_key:
-        url: https://artifacts.elastic.co/GPG-KEY-elasticsearch
-        state: present
-
-    - name: Install apt-transport-https
-      apt:
-        name: apt-transport-https
-        state: present
-
-    - name: Import repo
-      apt_repository:
-        repo: deb https://artifacts.elastic.co/packages/7.x/apt stable main
-        state: present
-
-    - name: Install {{ theBeat }}
-      apt:
-        name: "{{ theBeat }}"
-        state: present
-
-    when: ansible_facts['os_family'] == "Debian"
-
-  - name: enable system module in fileBeat
-    shell: "{{ theBeat }} modules enable system"
-    when: theBeat == "fileBeat"
-
-  - name: Remove localhost target for elastic
-    lineinfile:
-      path: /etc/{{ theBeat }}/{{ theBeat }}.yml
-      state: absent
-      regexp: '^  hosts: \[\"localhost:9200\"\]'
-
-  - name: point {{ theBeat }} at our server
-    blockinfile:
-      path: /etc/{{ theBeat }}/{{ theBeat }}.yml
-      marker: "# {mark} ANSIBLE MANAGED BLOCK"
-      insertafter: "output.elasticsearch:"
-      block: |2
-          hosts: ["{{ targetElasticsearchServer }}:{{ targetElasticsearchPort }}"]
-
-  - name: enable service {{ theBeat }}
-    systemd:
+  - name: install the latest version of {{ theBeat }}
+    dnf:
       name: "{{ theBeat }}"
-      enabled: yes
-      state: started
+      state: latest
 
-    when: (ansible_facts['os_family'] == "RedHat" and ansible_facts['distribution_major_version']|int >= 6) or
-           ansible_facts['os_family'] == "Debian"
+  when: ansible_facts['os_family'] == "RedHat"
+
+- name: Setup keys and repos for {{ theBeat }} (Debian)
+  block:
+
+  - name: Import elastic key
+    apt_key:
+      url: https://artifacts.elastic.co/GPG-KEY-elasticsearch
+      state: present
+
+  - name: Install apt-transport-https
+    apt:
+      name: apt-transport-https
+      state: present
+
+  - name: Import repo
+    apt_repository:
+      repo: deb https://artifacts.elastic.co/packages/7.x/apt stable main
+      state: present
+
+  - name: Install {{ theBeat }}
+    apt:
+      name: "{{ theBeat }}"
+      state: present
+
+  when: ansible_facts['os_family'] == "Debian"
+
+- name: enable system module in fileBeat
+  shell: "{{ theBeat }} modules enable system"
+  when: theBeat == "fileBeat"
+
+- name: Remove localhost target for elastic
+  lineinfile:
+    path: /etc/{{ theBeat }}/{{ theBeat }}.yml
+    state: absent
+    regexp: '^  hosts: \[\"localhost:9200\"\]'
+
+- name: point {{ theBeat }} at our server
+  blockinfile:
+    path: /etc/{{ theBeat }}/{{ theBeat }}.yml
+    marker: "# {mark} ANSIBLE MANAGED BLOCK"
+    insertafter: "output.elasticsearch:"
+    block: |2
+        hosts: ["{{ targetElasticsearchServer }}:{{ targetElasticsearchPort }}"]
+
+- name: enable service {{ theBeat }}
+  systemd:
+    name: "{{ theBeat }}"
+    enabled: yes
+    state: started
+
+  when: (ansible_facts['os_family'] == "RedHat" and ansible_facts['distribution_major_version']|int >= 6) or
+        ansible_facts['os_family'] == "Debian"
 
 
